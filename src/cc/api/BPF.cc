@@ -491,6 +491,28 @@ StatusTuple BPF::attach_perf_event_raw(void* perf_event_attr,
   return StatusTuple::OK();
 }
 
+StatusTuple BPF::attach_breakpoint(uint64_t symbol_addr,
+                                   int pid,
+                                   const std::string& probe_func,
+                                   int bt_type,
+                                   int bt_len) {
+
+    int probe_fd;/*check usage of probe fd*/
+
+    TRY2(load_func(probe_func, BPF_PROG_TYPE_PERF_EVENT, probe_fd));
+    bpf_attach_breakpoint(symbol_addr, pid, probe_fd, bp_type, bp_len);
+
+    return StatusTuple::OK();
+}
+
+StatusTuple BPF::detach_breakpoint(const std::string& probe_func) {
+
+    TRY2(unload_func(probe_func));
+    detach_perf_event(PERF_TYPE_BREAKPOINT, 0);
+
+    return StatusTuple::OK();
+}
+
 StatusTuple BPF::detach_kprobe(const std::string& kernel_func,
                                bpf_probe_attach_type attach_type) {
   std::string event = get_kprobe_event(kernel_func, attach_type);

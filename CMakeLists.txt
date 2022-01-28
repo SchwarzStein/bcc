@@ -78,7 +78,7 @@ endif()
 
 # clang is linked as a library, but the library path searching is
 # primitively supported, unlike libLLVM
-set(CLANG_SEARCH "/opt/local/llvm/lib;/usr/lib/llvm-3.7/lib;${LLVM_LIBRARY_DIRS}")
+set(CLANG_SEARCH "/opt/local/llvm/lib;/usr/lib/llvm-10/lib;${LLVM_LIBRARY_DIRS}")
 find_library(libclangAnalysis NAMES clangAnalysis clang-cpp HINTS ${CLANG_SEARCH})
 find_library(libclangAST NAMES clangAST clang-cpp HINTS ${CLANG_SEARCH})
 find_library(libclangBasic NAMES clangBasic clang-cpp HINTS ${CLANG_SEARCH})
