@@ -1123,13 +1123,13 @@ int bpf_attach_kprobe(int progfd, enum bpf_probe_attach_type attach_type,
                           fn_offset, -1, maxactive, 0);
 }
 
-StatusTuple BPF::attach_breakpoint(uint64_t symbol_addr,
-                                   int pid,
-                                   const std::string& probe_func,
-                                   int bt_type,
-                                   int bt_len);
+int attach_breakpoint(uint64_t symbol_addr,
+                      int pid,
+                      const char *probe_func,
+                      int bt_type,
+                      int bt_len);
 
-StatusTuple BPF::dettach_breakpoint(const std::string& probe_func);
+int dettach_breakpoint(char *probe_func);
 
 int bpf_attach_uprobe(int progfd, enum bpf_probe_attach_type attach_type,
                       const char *ev_name, const char *binary_path,

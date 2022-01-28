@@ -63,6 +63,12 @@ class BPF {
   ~BPF();
   StatusTuple detach_all();
 
+  StatusTuple attach_breakpoint(uint64_t symbol_addr, int pid,
+                                     const std::string& probe_func,
+                                     int bt_type, int bp_len);
+
+  StatusTuple detach_breakpoint(const std::string& kernel_func);
+
   StatusTuple attach_kprobe(const std::string& kernel_func,
                             const std::string& probe_func,
                             uint64_t kernel_func_offset = 0,
