@@ -45,6 +45,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <linux/if_alg.h>
+#include <linux/hw_breakpoint.h>
 
 #include "libbpf.h"
 #include "perf_reader.h"
@@ -264,6 +265,8 @@ static struct bpf_helper helpers[] = {
   {"check_mtu", "5.12"},
   {"for_each_map_elem", "5.13"},
 };
+
+volatile long stuff[256];
 
 static uint64_t ptr_to_u64(void *ptr)
 {
@@ -1516,4 +1519,40 @@ int bcc_iter_attach(int prog_fd, union bpf_iter_link_info *link_info,
 int bcc_iter_create(int link_fd)
 {
     return bpf_iter_create(link_fd);
+}
+
+int bpf_attach_breakpoint(uint64_t symbol_addr, int pid, int progfd, int bp_type, int bp_len) {
+  
+  struct perf_event_attr attr = {};
+  int fd;
+
+  memset(&attr, 0, sizeof(attr));
+  attr.size = sizeof(attr);
+  attr.type = PERF_TYPE_BREAKPOINT;
+  attr.bp_len = (bp_len > HW_BREAKPOINT_LEN_4 || bp_len < 0) ? HW_BREAKPOINT_LEN_1: bp_len;
+  attr.bp_addr = symbol_addr;
+  attr.bp_type = (__u32)bp_type;
+  attr.sample_period = 1;
+  attr.precise_ip = 2; // request synchronous delivery
+  attr.wakeup_events = 1;
+  attr.inherit = 1;
+
+  fd = syscall(__NR_perf_event_open, &attr, pid, -1 /*all cpus*/);
+  if (fd < 0) {
+      perror("breakpoint installation failed");
+      return -1;
+  }
+
+  if (ioctl(fd, PERF_EVENT_IOC_SET_BPF, progfd) != 0) {
+    perror("ioctl(PERF_EVENT_IOC_SET_BPF) failed");
+    close(fd);
+    return -1;
+  }
+  if (ioctl(fd, PERF_EVENT_IOC_ENABLE, 0) != 0) {
+    perror("ioctl(PERF_EVENT_IOC_ENABLE) failed");
+    close(fd);
+    return -1;
+  }
+
+  return fd;
 }

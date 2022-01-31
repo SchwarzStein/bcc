@@ -24,6 +24,8 @@
 #include <stdio.h>
 #include <iostream>
 #include <string>
+#include <assert.h>
+#include <linux/hw_breakpoint.h>
 
 const std::string BPF_PROGRAM = R"(
 
@@ -66,6 +68,18 @@ struct stack_key_t {
   int kernel_stack;
 };
 
+int validate_bp_type( char c ) {
+    switch(c) {
+        case '0': return  HW_BREAKPOINT_EMPTY;
+        case '1': return HW_BREAKPOINT_W;
+        case '2': return HW_BREAKPOINT_RW;
+        case '3': return HW_BREAKPOINT_X;
+        default:
+            assert(" Incorrect value of breakpoint has been passed\n");
+    }
+    return HW_BREAKPOINT_EMPTY; 
+}
+
 int main(int argc, char** argv) {
   
   ebpf::BPF bpf;
@@ -78,16 +92,17 @@ int main(int argc, char** argv) {
   std::ifstream pipe("/sys/kernel/debug/tracing/trace_pipe");
   std::string line;
   
-  uint64_t symbol_addr; 
+  uint64_t symbol_addr;
   char *end; 
-  long int num;
-  num = strtoull(argv[1], &end, 16);
   int pid;
   char chara = argv[3][0];
-  int c = chara - '0';
+  int bp_type;
+
+  bp_type  = validate_bp_type(chara);
+  symbol_addr = strtoull(argv[1], &end, 16);
   pid = std::stoi(argv[2]); //check only for a certain process
   
-  auto attach_res = bpf.attach_breakpoint(num, pid, "func", c);
+  auto attach_res = bpf.attach_breakpoint(symbol_addr, pid, "func", bp_type, 1);
 
   if (attach_res.code() != 0) {
     std::cerr << attach_res.msg() << std::endl;
