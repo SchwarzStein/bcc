@@ -40,6 +40,13 @@ struct open_probe_t {
   std::vector<std::pair<int, int>>* per_cpu_fd;
 };
 
+struct open_breakpoint_t {
+  int perf_fd;
+  int pid;
+  std::string func;
+  uint64_t symbol_addr;
+};
+
 class USDT;
 
 class BPF {
@@ -70,7 +77,7 @@ class BPF {
                                 int bp_len,
                                 int group_fd);
 
-  StatusTuple detach_breakpoint(const std::string& kernel_func);
+  StatusTuple detach_breakpoint(const std::string& probe_func, uint64_t symbol_addr, int pid);
 
   StatusTuple attach_kprobe(const std::string& kernel_func,
                             const std::string& probe_func,
@@ -335,6 +342,7 @@ class BPF {
   std::map<std::string, BPFPerfBuffer*> perf_buffers_;
   std::map<std::string, BPFPerfEventArray*> perf_event_arrays_;
   std::map<std::pair<uint32_t, uint32_t>, open_probe_t> perf_events_;
+  std::map<std::pair<uint64_t, int64_t>, open_breakpoint_t> breakpoints_;
 };
 
 class USDT {

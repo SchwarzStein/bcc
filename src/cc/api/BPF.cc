@@ -498,20 +498,48 @@ StatusTuple BPF::attach_breakpoint(uint64_t symbol_addr,
                                    int bp_len,
                                    int group_fd) {
 
-    int probe_fd;/*check usage of probe fd*/
+  auto bp_pair = std::make_pair(symbol_addr, pid);
 
-    TRY2(load_func(probe_func, BPF_PROG_TYPE_PERF_EVENT, probe_fd));
-    bpf_attach_breakpoint(symbol_addr, pid, probe_fd, bt_type, bp_len, group_fd);
+  if (pid == -1)
+     return StatusTuple(-1, "Breakpoint are only inserted for specific process ids not -1 ");
+  
+  if (breakpoints_.find(bp_pair) != breakpoints_.end())
+     return StatusTuple(-1, "Breakpoint at %lx for pid %d already attached", symbol_addr, pid);
+  
+  
+  int probe_fd;/*check usage of probe fd*/
+  int res_fd;
+  
+  TRY2(load_func(probe_func, BPF_PROG_TYPE_PERF_EVENT, probe_fd));
+  res_fd = bpf_attach_breakpoint(symbol_addr, pid, probe_fd, bt_type, bp_len, group_fd);
+  
+  if (res_fd < 0) {
+      TRY2(unload_func(probe_func));
+      return StatusTuple(-1, "Unable to attach breakpoint %lx using %s", symbol_addr, probe_func.c_str());
+  }
+  
+  open_breakpoint_t p = {};
+  p.symbol_addr = symbol_addr;
+  p.func = probe_func;
+  p.perf_fd = res_fd;
+  p.pid = pid;
 
-    return StatusTuple::OK();
+  breakpoints_[bp_pair] = std::move(p);
+  
+  return StatusTuple::OK();
 }
 
-StatusTuple BPF::detach_breakpoint(const std::string& probe_func) {
+StatusTuple BPF::detach_breakpoint(const std::string& probe_func, uint64_t symbol_addr, int pid) {
 
-    TRY2(unload_func(probe_func));
-    detach_perf_event(PERF_TYPE_BREAKPOINT, 0);
+  auto bp_pair = std::make_pair(symbol_addr, pid);
+  auto value = breakpoints_[bp_pair];
+  if ( (value.symbol_addr == symbol_addr) && (value.pid == pid) && (value.func == probe_func) ) {
+      breakpoints_.erase(bp_pair);
+      close(value.perf_fd);
+      TRY2(unload_func(probe_func));
+    }        
 
-    return StatusTuple::OK();
+  return StatusTuple::OK();
 }
 
 StatusTuple BPF::detach_kprobe(const std::string& kernel_func,

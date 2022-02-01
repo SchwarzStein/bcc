@@ -738,10 +738,10 @@ class BPF(object):
         ev_name = b"r_" + event.replace(b"+", b"_").replace(b".", b"_")
         self.detach_kprobe_event(ev_name)
 
-    def attach_breakpoint(self, symbol_addr, pid, fn_name, bp_type, bp_len):
+    def attach_breakpoint(self, symbol_addr, pid, fn_name, bp_type, bp_len=1, group_fd=-1):
         fn_name = _assert_is_bytes(fn_name)
         fn = self.load_func(fn_name, BPF.PERF_EVENT)
-        lib.bpf_attach_breakpoint(symbol_addr, pid, fn.fd, bp_type)
+        lib.bpf_attach_breakpoint(symbol_addr, pid, fn.fd, bp_type, bp_len, group_fd)
         return self
 
     @staticmethod

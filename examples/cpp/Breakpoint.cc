@@ -165,7 +165,7 @@ int main(int argc, char** argv) {
     std::cout << "Total " << lost_stacks << " stack-traces lost due to "
               << "hash collision or stack table full" << std::endl;
 
-  bpf.detach_breakpoint("func");
+  bpf.detach_breakpoint("func", symbol_addr, pid);
 
   return 0;
 }
