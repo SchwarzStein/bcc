@@ -83,7 +83,7 @@ int bpf_attach_kprobe(int progfd, enum bpf_probe_attach_type attach_type,
                       const char *ev_name, const char *fn_name, uint64_t fn_offset,
                       int maxactive);
 
-int bpf_attach_breakpoint(uint64_t symbol_addr, int pid, int progfd, int bp_type, int bp_len);
+int bpf_attach_breakpoint(uint64_t symbol_addr, int pid, int progfd, int bp_type, int bp_len, int group_fd);
 
 int bpf_detach_kprobe(const char *ev_name);
 

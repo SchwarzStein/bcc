@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
   symbol_addr = strtoull(argv[1], &end, 16);
   pid = std::stoi(argv[2]); //check only for a certain process
   
-  auto attach_res = bpf.attach_breakpoint(symbol_addr, pid, "func", bp_type, 1);
+  auto attach_res = bpf.attach_breakpoint(symbol_addr, pid, "func", bp_type, 1,-1/*groupfd*/);
 
   if (attach_res.code() != 0) {
     std::cerr << attach_res.msg() << std::endl;

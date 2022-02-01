@@ -1128,9 +1128,9 @@ int bpf_attach_kprobe(int progfd, enum bpf_probe_attach_type attach_type,
 
 int bpf_attach_breakpoint(uint64_t symbol_addr,
                           int pid,
-                          const char *probe_func,
-                          int bt_type,
-                          int bt_len,
+                          int progfd,
+                          int bp_type,
+                          int bp_len,
                           int group_fd);
 
 int bpf_detach_breakpoint(char *probe_func);
