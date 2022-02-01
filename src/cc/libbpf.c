@@ -1126,13 +1126,14 @@ int bpf_attach_kprobe(int progfd, enum bpf_probe_attach_type attach_type,
                           fn_offset, -1, maxactive, 0);
 }
 
-int attach_breakpoint(uint64_t symbol_addr,
-                      int pid,
-                      const char *probe_func,
-                      int bt_type,
-                      int bt_len);
+int bpf_attach_breakpoint(uint64_t symbol_addr,
+                          int pid,
+                          const char *probe_func,
+                          int bt_type,
+                          int bt_len,
+                          int group_fd);
 
-int dettach_breakpoint(char *probe_func);
+int bpf_detach_breakpoint(char *probe_func);
 
 int bpf_attach_uprobe(int progfd, enum bpf_probe_attach_type attach_type,
                       const char *ev_name, const char *binary_path,
@@ -1521,7 +1522,7 @@ int bcc_iter_create(int link_fd)
     return bpf_iter_create(link_fd);
 }
 
-int bpf_attach_breakpoint(uint64_t symbol_addr, int pid, int progfd, int bp_type, int bp_len) {
+int bpf_attach_breakpoint(uint64_t symbol_addr, int pid, int prog_fd, int bp_type, int bp_len, int group_fd) {
   
   struct perf_event_attr attr = {};
   int fd;
@@ -1537,17 +1538,24 @@ int bpf_attach_breakpoint(uint64_t symbol_addr, int pid, int progfd, int bp_type
   attr.wakeup_events = 1;
   attr.inherit = 1;
 
-  fd = syscall(__NR_perf_event_open, &attr, pid, -1 /*all cpus*/);
+  fd = syscall(__NR_perf_event_open, &attr, pid, -1 /*all cpus*/,group_fd, PERF_FLAG_FD_CLOEXEC);
   if (fd < 0) {
       perror("breakpoint installation failed");
       return -1;
   }
 
-  if (ioctl(fd, PERF_EVENT_IOC_SET_BPF, progfd) != 0) {
+  if (ioctl(fd, PERF_EVENT_IOC_SET_BPF, prog_fd) != 0) {
     perror("ioctl(PERF_EVENT_IOC_SET_BPF) failed");
     close(fd);
     return -1;
   }
+
+  if (ioctl(fd, PERF_EVENT_IOC_RESET, 0) != 0) {
+    perror("ioctl(PERF_EVENT_IOC_RESET) failed");
+    close(fd);
+    return -1;
+  }
+
   if (ioctl(fd, PERF_EVENT_IOC_ENABLE, 0) != 0) {
     perror("ioctl(PERF_EVENT_IOC_ENABLE) failed");
     close(fd);

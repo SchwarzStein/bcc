@@ -495,12 +495,13 @@ StatusTuple BPF::attach_breakpoint(uint64_t symbol_addr,
                                    int pid,
                                    const std::string& probe_func,
                                    int bt_type,
-                                   int bp_len) {
+                                   int bp_len,
+                                   int group_fd) {
 
     int probe_fd;/*check usage of probe fd*/
 
     TRY2(load_func(probe_func, BPF_PROG_TYPE_PERF_EVENT, probe_fd));
-    bpf_attach_breakpoint(symbol_addr, pid, probe_fd, bt_type, bp_len);
+    bpf_attach_breakpoint(symbol_addr, pid, probe_fd, bt_type, bp_len, group_fd);
 
     return StatusTuple::OK();
 }
