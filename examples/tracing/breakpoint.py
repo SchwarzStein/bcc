@@ -29,13 +29,13 @@ int func(struct pt_regs *ctx) {
 
 def get_prog_arguments():
     bp_choices = ['BP_R','BP_W','BP_RW','BP_X']
-    bp_values = zip(range(1,4),bp_choices)
+    bp_values = dict( zip(bp_choices, range(1,5)) )  
     parser = argparse.ArgumentParser(description="Install breakpoint in process and print hello world when triggered\n")
-    parser.add_argument('--symbol_addr',type=hex,help='the address, in hex, at which the breakpoint will be installed')
+    parser.add_argument('--symbol_addr',type=str,help='the address, in hex, at which the breakpoint will be installed')
     parser.add_argument('--pid',type=int,help='the pid of target process')
     parser.add_argument('--bp_type',type=str,help='the type of breakpoint to install',choices=bp_choices)
     args = parser.parse_args()
-    return (args.symbol_addr, args.pid,bp_values[args.bp_type])
+    return (int(args.symbol_addr,16), args.pid,bp_values[args.bp_type])
 
 (symbol_addr,pid,bp_type) = get_prog_arguments()
 b = BPF(text=bpf_prog)
