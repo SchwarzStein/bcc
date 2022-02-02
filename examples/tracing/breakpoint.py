@@ -15,8 +15,9 @@
 from __future__ import print_function
 from bcc import BPF
 from bcc.utils import printb
+import argparse
 
-prog = """
+bpf_prog = """
 #include <uapi/linux/ptrace.h>
 
 int func(struct pt_regs *ctx) {
@@ -24,11 +25,20 @@ int func(struct pt_regs *ctx) {
     return 0;
 }
 """
-b = BPF(text=prog)
 
-symbol_addr = input()
-pid = input()
-bp_type = input()
+
+def get_prog_arguments():
+    bp_choices = ['BP_R','BP_W','BP_RW','BP_X']
+    bp_values = zip(range(1,4),bp_choices)
+    parser = argprser.ArgumentParser(description="Install breakpoint in process and print hello world when triggered\n")
+    parser.add_argument('symbol_addr',type=int,'the address at which the breakpoint will be installed')
+    parser.add_argument('pid',type=int,'the pid of target process')
+    parser.add_argument('bp_type',type=str,'the type of breakpoint to install',choices=bp_choices)
+    args = parser.parse_args()
+    return (args.symbol_addr, args.pid,bp_values[args.bp_type])
+
+(symbol_addr,pid,bp_type) = get_prog_arguments()
+b = BPF(text=bpf_prog)
 b.attach_breakpoint(symbol_addr, pid, "func", bp_type)
 
 # header
