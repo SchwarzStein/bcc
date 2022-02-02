@@ -1537,16 +1537,15 @@ int bpf_attach_breakpoint(uint64_t symbol_addr, int pid, int prog_fd, int bp_typ
   attr.precise_ip = 2; // request synchronous delivery
   attr.wakeup_events = 1;
   attr.inherit = 1;
-  attr.pinned = 1;
+  attr.bp_len = (bp_type == HW_BREAKPOINT_X) ? sizeof(long): attr.bp_len;
 
   fd = syscall(__NR_perf_event_open, &attr, pid, -1 /*all cpus*/,group_fd, PERF_FLAG_FD_CLOEXEC);
   if (fd < 0) {
-      perror("breakpoint installation failed");
-      return -1;
+    perror("breakpoint installation failed");
+    return -1;
   }
 
-  if (ioctl(fd, PERF_EVENT_IOC_SET_BPF, prog_fd) != 0) {
-    perror("ioctl(PERF_EVENT_IOC_SET_BPF) failed");
+  if (ioctl(fd, PERF_EVENT_IOC_SET_BPF, prog_fd) != 0) { perror("ioctl(PERF_EVENT_IOC_SET_BPF) failed");
     close(fd);
     return -1;
   }
