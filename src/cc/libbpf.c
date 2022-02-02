@@ -1545,13 +1545,8 @@ int bpf_attach_breakpoint(uint64_t symbol_addr, int pid, int prog_fd, int bp_typ
     return -1;
   }
 
-  if (ioctl(fd, PERF_EVENT_IOC_SET_BPF, prog_fd) != 0) { perror("ioctl(PERF_EVENT_IOC_SET_BPF) failed");
-    close(fd);
-    return -1;
-  }
-
-  if (ioctl(fd, PERF_EVENT_IOC_RESET, 0) != 0) {
-    perror("ioctl(PERF_EVENT_IOC_RESET) failed");
+  if (ioctl(fd, PERF_EVENT_IOC_SET_BPF, prog_fd) != 0) {
+    perror("ioctl(PERF_EVENT_IOC_SET_BPF) failed");
     close(fd);
     return -1;
   }
