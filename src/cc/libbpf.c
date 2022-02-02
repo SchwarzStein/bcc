@@ -1537,6 +1537,7 @@ int bpf_attach_breakpoint(uint64_t symbol_addr, int pid, int prog_fd, int bp_typ
   attr.precise_ip = 2; // request synchronous delivery
   attr.wakeup_events = 1;
   attr.inherit = 1;
+  attr.pinned = 1;
 
   fd = syscall(__NR_perf_event_open, &attr, pid, -1 /*all cpus*/,group_fd, PERF_FLAG_FD_CLOEXEC);
   if (fd < 0) {
