@@ -318,6 +318,7 @@ class BPF(object):
         self.kfunc_entry_fds = {}
         self.kfunc_exit_fds = {}
         self.lsm_fds = {}
+        self.breakpoint_fds = {}
         self.perf_buffers = {}
         self.open_perf_events = {}
         self._ringbuf_manager = None
@@ -640,6 +641,16 @@ class BPF(object):
         del self.uprobe_fds[name]
         _num_open_probes -= 1
 
+    def _add_breakpoint_fd(self, name, fd):
+        global _num_open_probes
+        self.breakpoint_fds[name] = fd
+        _num_open_probes += 1
+
+    def _del_breakpoint_fd(self, name):
+        global _num_open_probes
+        del self.breakpoint_fds[name]
+        _num_open_probes -= 1
+
     # Find current system's syscall prefix by testing on the BPF syscall.
     # If no valid value found, will return the first possible value which
     # would probably lead to error in later API calls.
@@ -741,9 +752,22 @@ class BPF(object):
     def attach_breakpoint(self, symbol_addr, pid, fn_name, bp_type, bp_len=1, group_fd=-1):
         fn_name = _assert_is_bytes(fn_name)
         fn = self.load_func(fn_name, BPF.PERF_EVENT)
-        lib.bpf_attach_breakpoint(symbol_addr, pid, fn.fd, bp_type, bp_len, group_fd)
-        return self
+        bfd = lib.bpf_attach_breakpoint(symbol_addr, pid, fn.fd, bp_type, bp_len, group_fd)
 
+        if bfd < 0:
+            raise Exception("Failed to attach BPF to raw tracepoint")
+        self.breakpoint_fds[ str(hex(symbol_addr))+"_"+str(pid)] = {"func":fn_name,"fd":bfd,"type":bp_type}
+
+    def detach_breakpoint(self, symbol_addr, pid):
+        name = str(hex(symbol_addr)) + "_" + str(pid)
+        item = None
+
+        try:
+            item = self.breakpoint_fds.pop(name)
+        except KeyError:
+            return
+        os.close(item["fd"])
+         
     @staticmethod
     def attach_xdp(dev, fn, flags=0):
         '''
