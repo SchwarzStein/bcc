@@ -1416,13 +1416,13 @@ int bpf_attach_perf_event_raw(int progfd, void *perf_event_attr, pid_t pid,
     perror("perf_event_open failed");
     return -1;
   }
-  if (ioctl(fd, PERF_EVENT_IOC_SET_BPF, progfd) != 0) {
-    perror("ioctl(PERF_EVENT_IOC_SET_BPF) failed");
+  if (ioctl(fd, PERF_EVENT_IOC_ENABLE, 0) != 0) {
+    perror("ioctl(PERF_EVENT_IOC_ENABLE) failed");
     close(fd);
     return -1;
   }
-  if (ioctl(fd, PERF_EVENT_IOC_ENABLE, 0) != 0) {
-    perror("ioctl(PERF_EVENT_IOC_ENABLE) failed");
+  if (ioctl(fd, PERF_EVENT_IOC_SET_BPF, progfd) != 0) {
+    perror("ioctl(PERF_EVENT_IOC_SET_BPF) failed");
     close(fd);
     return -1;
   }
