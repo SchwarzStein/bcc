@@ -1534,9 +1534,9 @@ int bpf_attach_breakpoint(uint64_t symbol_addr, int pid, int prog_fd, int bp_typ
   attr.bp_len = (bp_len > HW_BREAKPOINT_LEN_4 || bp_len < 0) ? HW_BREAKPOINT_LEN_1: bp_len;
   attr.bp_addr = symbol_addr;
   attr.bp_type = (__u32)bp_type;
-//  attr.sample_period = 1;
-//  attr.precise_ip = 2; // request synchronous delivery
-//  attr.wakeup_events = 1;
+  attr.sample_period = 1;
+  attr.precise_ip = 2; // request synchronous delivery
+  attr.wakeup_events = 1;
   attr.inherit = 1;
   attr.bp_len = (bp_type == HW_BREAKPOINT_X) ? sizeof(long): attr.bp_len;
 
